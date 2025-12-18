@@ -374,6 +374,9 @@
           swoopAmount: -100,
           scale: true,
           scalePeak: 2,
+          onComplete: () => {
+            gsap.set(item1Ref.current, { x: 0, y: 0, scale: 1 });
+          }
         });
       };
 
@@ -385,6 +388,9 @@
           motionDuration: 0.3,
           swoopAmount: 0,
           scale: false,
+          onComplete: () => {
+            gsap.set(item2Ref.current, { x: 0, y: 0, scale: 1 });
+          }
         });
       };
 
@@ -401,9 +407,7 @@
           scaleTarget: 0,
           onComplete: () => {
             setTimeout(() => {
-              if (item3Ref.current) {
-                item3Ref.current.style.transform = 'translate(0, 0) scale(1)';
-              }
+              gsap.set(item3Ref.current, { x: 0, y: 0, scale: 1 });
             }, 500);
           }
         });
@@ -419,6 +423,9 @@
           swoopAmount: 150,
           scale: true,
           scalePeak: 2.5,
+          onComplete: () => {
+            gsap.set(item4Ref.current, { x: 0, y: 0, scale: 1 });
+          }
         });
       };
 
@@ -447,9 +454,7 @@
             onComplete: () => {
               setTimeout(() => {
                 [item5aRef, item5bRef, item5cRef].forEach(ref => {
-                  if (ref.current) {
-                    ref.current.style.transform = 'translate(0, 0) scale(1)';
-                  }
+                  gsap.set(ref.current, { x: 0, y: 0, scale: 1 });
                 });
               }, 500);
             }
