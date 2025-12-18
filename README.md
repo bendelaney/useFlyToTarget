@@ -14,9 +14,15 @@ A self-contained React hook for animating elements to "fly" from their current p
 
 ## Installation
 
-No installation needed - the hook is already part of your project at:
-```
-/apps/scheduledesk/hooks/useFlyToTarget.ts
+1. Copy `useFlyToTarget.ts` to your project's hooks directory
+2. Ensure you have the required dependencies:
+
+```bash
+npm install gsap react
+# or
+yarn add gsap react
+# or
+pnpm add gsap react
 ```
 
 ## Basic Usage
@@ -106,22 +112,28 @@ const handleClick = () => {
 };
 ```
 
-### 2. Drag Release (like Sandbox)
+### 2. Drag Release (with GSAP Draggable)
 
 ```tsx
+import { Draggable } from 'gsap/Draggable';
+
 const { flyToTarget } = useFlyToTarget();
 
-Draggable.create(element, {
-  type: 'x,y',
-  onDragEnd: function() {
-    flyToTarget(element, targetElement, {
-      duration: 0.45,
-      ease: 'power3.out',
-      scale: true,
-      scalePeak: 2.5,
-    });
-  },
-});
+useEffect(() => {
+  const draggable = Draggable.create(element, {
+    type: 'x,y',
+    onDragEnd: function() {
+      flyToTarget(element, targetElement, {
+        duration: 0.45,
+        ease: 'power3.out',
+        scale: true,
+        scalePeak: 2.5,
+      });
+    },
+  });
+
+  return () => draggable[0].kill();
+}, []);
 ```
 
 ### 3. Hide Animation (collapsing to button)
@@ -130,7 +142,7 @@ Draggable.create(element, {
 const { flyToTarget } = useFlyToTarget();
 
 const handleHide = () => {
-  // Make element fixed position first
+  // Make element fixed position first to break out of container
   const rect = listElement.getBoundingClientRect();
   gsap.set(listElement, {
     position: 'fixed',
@@ -148,9 +160,10 @@ const handleHide = () => {
     scale: true,
     grabScale: 1.0,
     scalePeak: 1.13,
-    scaleTarget: 0,
+    scaleTarget: 0,  // Shrink to nothing
     onComplete: () => {
       // Remove from DOM or update state
+      listElement.remove();
     }
   });
 };
@@ -219,37 +232,147 @@ timeline?.kill();
    - Scale down to `scaleTarget` over `scaleDownDuration`
 4. **Shadow**: Automatically adjusts shadow blur based on scale if `enableShadow` is true
 
-## Tips
+### 8. Multiple Items to Same Target (Staggered)
 
-- **Negative swoopAmount**: Curves left/downward
-- **Positive swoopAmount**: Curves right/upward
-- **swoopAmount 0**: Straight line
-- **scale false**: Motion only, no scale animation
+```tsx
+const { flyToTarget } = useFlyToTarget();
+
+const handleCollectAll = () => {
+  items.forEach((itemRef, index) => {
+    setTimeout(() => {
+      flyToTarget(itemRef.current, collectorRef.current, {
+        duration: 0.5,
+        swoopAmount: -80,
+        onComplete: index === items.length - 1
+          ? () => console.log('All items collected!')
+          : undefined
+      });
+    }, index * 150); // Stagger by 150ms
+  });
+};
+```
+
+## How It Works
+
+1. **Motion**: Calculates the path from source center to target center
+2. **Curve**: If `swoopAmount` is non-zero, creates a bezier curve using a perpendicular control point
+3. **Scale**: Animates scale in three phases:
+   - Start at `grabScale`
+   - Scale up to `scalePeak` over `scaleUpDuration`
+   - Pause for `scalePause`
+   - Scale down to `scaleTarget` over `scaleDownDuration`
+4. **Shadow**: Automatically adjusts shadow blur based on scale if `enableShadow` is true
+
+## Animation Path Details
+
+The hook calculates motion paths intelligently:
+
+- **Center-to-center**: Elements fly from their center to the target's center
+- **Transform-aware**: Works with existing GSAP transforms (x, y, rotation, scale)
+- **Curved paths**: Uses GSAP MotionPathPlugin for smooth bezier curves
+- **Perpendicular control points**: Curve control points are calculated perpendicular to the motion path
+
+## Tips & Tricks
+
+### Swoop Direction
+- **Negative swoopAmount**: Curves left/downward (e.g., `-100`)
+- **Positive swoopAmount**: Curves right/upward (e.g., `100`)
+- **swoopAmount = 0**: Straight line, no curve
+
+### Scale Behavior
+- **scale = false**: Motion only, no scale animation
 - **grabScale = 1.0**: Start from natural size
-- **scaleTarget = 0**: Shrink to nothing (for hide animations)
-- **Fixed positioning**: For elements that need to break out of containers, set `position: fixed` before animating
+- **scaleTarget = 0**: Shrink to nothing (perfect for hide animations)
+- **scalePeak > grabScale**: Creates a "lift" effect
 
-## Integration with Existing Code
-
-This hook was designed to replace manual GSAP animation code. Instead of:
+### Fixed Positioning
+For elements that need to break out of containers (like modals, lists, etc.):
 
 ```tsx
-// Old way - manual GSAP
-gsap.to(element, {
-  x: targetX,
-  y: targetY,
-  duration: 0.5,
-  // ... lots of configuration
+const rect = element.getBoundingClientRect();
+gsap.set(element, {
+  position: 'fixed',
+  top: rect.top,
+  left: rect.left,
+  width: rect.width,
+  height: rect.height,
+  zIndex: 10000
 });
 ```
 
-Use:
+### Easing Options
+Common GSAP easing functions:
+- `power1.out`, `power2.out`, `power3.out`, `power4.out` - Smooth deceleration
+- `back.out(1.1)` - Overshoots slightly then settles
+- `elastic.out` - Bouncy spring effect
+- `bounce.out` - Bounces at the end
+- `expo.out` - Exponential deceleration
+- `none` - Linear, no easing
 
-```tsx
-// New way - useFlyToTarget hook
-flyToTarget(element, targetElement, {
+## Interactive Examples
+
+This repository includes two interactive demos:
+
+1. **Sandbox-demo.tsx** - Five different usage examples:
+   - Basic click animation
+   - Straight line motion
+   - Hide animation (shrink to nothing)
+   - Bouncy curved path
+   - Multiple items with stagger
+
+2. **Sandbox-configurator.tsx** - Interactive parameter tweaker:
+   - Drag & drop testing
+   - Real-time parameter sliders
+   - Live JSON config output
+   - Perfect for fine-tuning your settings
+
+## TypeScript Support
+
+The hook is written in TypeScript and exports the `FlyToTargetConfig` interface:
+
+```typescript
+import { FlyToTargetConfig, useFlyToTarget } from './useFlyToTarget';
+
+const config: FlyToTargetConfig = {
   duration: 0.5,
-});
+  swoopAmount: -100,
+  scale: true,
+};
+
+const { flyToTarget } = useFlyToTarget();
+flyToTarget(sourceEl, targetEl, config);
 ```
 
-The hook handles all the complex calculations for paths, curves, and scale animations.
+## Browser Support
+
+Works in all modern browsers that support:
+- ES6+
+- GSAP 3.x
+- React 18+
+
+## Performance Considerations
+
+- Animations use GSAP's optimized transform engine
+- Hardware-accelerated CSS transforms
+- Efficiently handles multiple simultaneous animations
+- Timeline management prevents memory leaks
+
+## Common Use Cases
+
+- **Drag and drop**: Animate items snapping to drop zones
+- **Shopping carts**: Items flying into cart on click
+- **Collections**: Multiple items collecting to a single point
+- **Hide/minimize**: Elements collapsing into buttons or trays
+- **Gamification**: Points, badges, or rewards flying to score areas
+- **Data visualization**: Elements moving between states
+- **Gallery interactions**: Images flying to enlarged view
+
+## License
+
+MIT
+
+## Credits
+
+Created by Ben Delaney
+
+Built with [GSAP](https://greensock.com/gsap/) - Professional-grade animation library
