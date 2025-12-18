@@ -52,6 +52,17 @@ function MyComponent() {
 }
 ```
 
+## How It Works
+
+1. **Motion**: Calculates the path from source center to target center
+2. **Curve**: If `swoopAmount` is non-zero, creates a bezier curve using a perpendicular control point
+3. **Scale**: Animates scale in three phases:
+   - Starts at 1.0
+   - Scale up to `scalePeak` over `scaleUpDuration`
+   - Pauses for `scalePause`
+   - Scales down to `scaleTarget` over `scaleDownDuration`
+4. **Shadow**: Automatically adjusts shadow blur based on scale if `enableShadow` is true
+
 ## Configuration Options
 
 All configuration options are optional. Here are the defaults:
@@ -221,17 +232,6 @@ timeline?.reverse();
 timeline?.kill();
 ```
 
-## How It Works
-
-1. **Motion**: Calculates the path from source center to target center
-2. **Curve**: If `swoopAmount` is non-zero, creates a bezier curve using a perpendicular control point
-3. **Scale**: Animates scale in three phases:
-   - Start at `grabScale`
-   - Scale up to `scalePeak` over `scaleUpDuration`
-   - Pause for `scalePause`
-   - Scale down to `scaleTarget` over `scaleDownDuration`
-4. **Shadow**: Automatically adjusts shadow blur based on scale if `enableShadow` is true
-
 ### 8. Multiple Items to Same Target (Staggered)
 
 ```tsx
@@ -251,17 +251,6 @@ const handleCollectAll = () => {
   });
 };
 ```
-
-## How It Works
-
-1. **Motion**: Calculates the path from source center to target center
-2. **Curve**: If `swoopAmount` is non-zero, creates a bezier curve using a perpendicular control point
-3. **Scale**: Animates scale in three phases:
-   - Start at `grabScale`
-   - Scale up to `scalePeak` over `scaleUpDuration`
-   - Pause for `scalePause`
-   - Scale down to `scaleTarget` over `scaleDownDuration`
-4. **Shadow**: Automatically adjusts shadow blur based on scale if `enableShadow` is true
 
 ## Animation Path Details
 
@@ -313,18 +302,16 @@ Common GSAP easing functions:
 
 This repository includes two interactive demos:
 
-1. **Sandbox-demo.tsx** - Five different usage examples:
+1. **useFlyToTarget-demos.tsx** - Five different usage examples:
    - Basic click animation
    - Straight line motion
    - Hide animation (shrink to nothing)
    - Bouncy curved path
    - Multiple items with stagger
 
-2. **Sandbox-configurator.tsx** - Interactive parameter tweaker:
-   - Drag & drop testing
-   - Real-time parameter sliders
-   - Live JSON config output
+2. **useFlyToTarget-configurator.tsx** - Interactive parameter tweaker:
    - Perfect for fine-tuning your settings
+   - Live JSON config output
 
 ## TypeScript Support
 
