@@ -2,6 +2,8 @@
 
 A self-contained React hook for animating elements to "fly" from their current position to a target element with configurable curved paths, scaling, and shadows.
 
+**[🚀 Live Demo](https://bendelaney.github.io/useFlyToTarget/)** | **[📦 GitHub](https://github.com/bendelaney/useFlyToTarget)** | **[📖 Documentation](#configuration-options)**
+
 ## Features
 
 - **Self-contained**: All GSAP plugins and dependencies are handled internally
