@@ -3,13 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>useFlyToTarget - Interactive Demo</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <title>useFlyToTarget - Interactive Configurator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -18,529 +14,506 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .header {
-      text-align: center;
-      color: white;
-      margin-bottom: 40px;
-    }
-
-    .header h1 {
-      font-size: 48px;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .header p {
-      font-size: 18px;
-      opacity: 0.9;
-    }
-
-    .header .links {
-      margin-top: 20px;
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-    }
-
-    .header .links a {
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
-      transition: background 0.2s;
-    }
-
-    .header .links a:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    #root {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
       overflow: hidden;
     }
 
-    .demo-container {
-      padding: 40px;
-      min-height: 600px;
-    }
-
-    .examples-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 30px;
-      margin-bottom: 40px;
-    }
-
-    .example-card {
-      background: #f8f9fa;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .example-card.full-width {
-      grid-column: 1 / -1;
-    }
-
-    .example-title {
-      margin: 0 0 8px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .example-description {
-      margin: 0 0 20px 0;
-      font-size: 14px;
-      color: #666;
-    }
-
-    .example-stage {
+    .sandbox-container {
       position: relative;
-      background: white;
-      border-radius: 8px;
-      padding: 40px;
-      min-height: 200px;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .controls-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
       display: flex;
-      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .parameters-panel {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 12px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 320px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    .parameters-title {
+      margin: 0;
+      margin-bottom: 8px;
+    }
+
+    .parameter-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .ease-select,
+    .scale-ease-select {
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .checkbox-label {
+      display: flex;
       align-items: center;
+      gap: 8px;
     }
 
-    .example-stage.wide {
-      min-height: 150px;
-    }
-
-    .items-group {
-      display: flex;
-      gap: 16px;
-    }
-
-    .item {
-      padding: 16px 24px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.2s;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .item:hover {
-      transform: scale(1.05);
-    }
-
-    .item:active {
-      transform: scale(0.95);
-    }
-
-    .item.small {
-      padding: 12px 16px;
-      font-size: 14px;
-    }
-
-    .item.blue { background: #4a90e2; }
-    .item.green { background: #4caf50; }
-    .item.red { background: #e74c3c; }
-    .item.purple { background: #9b59b6; }
-    .item.orange { background: #f39c12; }
-
-    .target {
-      padding: 12px 20px;
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.05);
-      border: 2px dashed rgba(0, 0, 0, 0.2);
-      color: #666;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .target.small {
-      padding: 8px 16px;
-      font-size: 12px;
-    }
-
-    .trigger-button {
-      margin-top: 16px;
-      padding: 12px 24px;
-      border-radius: 8px;
+    .reset-button {
+      margin-top: 8px;
+      padding: 10px 16px;
+      border-radius: 6px;
       border: none;
-      background: #667eea;
       color: white;
-      font-weight: 600;
-      cursor: pointer;
+      font-weight: bold;
       transition: background 0.2s;
     }
 
-    .trigger-button:hover {
-      background: #5568d3;
+    .reset-button.enabled {
+      background: #4caf50;
+      cursor: pointer;
     }
 
-    .info-panel {
-      background: #f8f9fa;
+    .reset-button.disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+
+    .config-output-panel {
+      background: transparent;
+      padding: 20px;
       border-radius: 12px;
-      padding: 32px;
+      color: white;
+      width: 300px;
+      height: auto;
     }
 
-    .info-panel h2 {
-      margin: 0 0 16px 0;
-      font-size: 24px;
-      color: #333;
+    .config-output-title {
+      margin: 0;
+      margin-bottom: 12px;
     }
 
-    .info-panel p {
-      margin: 0 0 16px 0;
-      color: #666;
-      line-height: 1.6;
+    .config-output-content {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .info-panel code {
-      background: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
+    .target-circle {
+      position: absolute;
+      top: 80px;
+      right: 120px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 100, 100, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dart-home {
+      position: absolute;
+      bottom: 200px;
+      left: 450px;
+    }
+
+    .dart {
+      width: 80px;
+      height: 80px;
+      z-index: 10000;
+      position: absolute;
+      border-radius: 50%;
+      background: color(display-p3 0.29 0.68 0.31);
+      user-select: none;
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
       font-size: 14px;
     }
 
-    .info-panel ul {
-      margin: 0;
-      padding-left: 24px;
-      color: #666;
+    .dart:hover {
+      transform: scale(1.05);
     }
 
-    .info-panel li {
-      margin-bottom: 8px;
-      line-height: 1.6;
+    input[type="range"] {
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>useFlyToTarget</h1>
-      <p>A React hook for animating elements with curved paths and scale effects</p>
-      <div class="links">
-        <a href="https://github.com/bendelaney/useFlyToTarget" target="_blank">📦 GitHub</a>
-        <a href="https://github.com/bendelaney/useFlyToTarget#readme" target="_blank">📖 Documentation</a>
+  <div class="sandbox-container">
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+      <div class="parameters-panel">
+        <h3 class="parameters-title">Parameters</h3>
+
+        <label class="parameter-label">
+          Duration: <span id="duration-value">0.45</span>s
+          <input type="range" id="duration" min="0.10" max="3.00" step="0.01" value="0.45">
+        </label>
+
+        <label class="parameter-label">
+          Ease:
+          <select class="ease-select" id="ease">
+            <option value="none">none</option>
+            <option value="power1.in">power1.in</option>
+            <option value="power1.out">power1.out</option>
+            <option value="power1.inOut">power1.inOut</option>
+            <option value="power2.in">power2.in</option>
+            <option value="power2.out">power2.out</option>
+            <option value="power2.inOut">power2.inOut</option>
+            <option value="power3.in">power3.in</option>
+            <option value="power3.out" selected>power3.out</option>
+            <option value="power3.inOut">power3.inOut</option>
+            <option value="power4.in">power4.in</option>
+            <option value="power4.out">power4.out</option>
+            <option value="power4.inOut">power4.inOut</option>
+            <option value="back.in">back.in</option>
+            <option value="back.out">back.out</option>
+            <option value="back.inOut">back.inOut</option>
+            <option value="elastic.in">elastic.in</option>
+            <option value="elastic.out">elastic.out</option>
+            <option value="elastic.inOut">elastic.inOut</option>
+            <option value="expo.in">expo.in</option>
+            <option value="expo.out">expo.out</option>
+            <option value="expo.inOut">expo.inOut</option>
+            <option value="bounce.in">bounce.in</option>
+            <option value="bounce.out">bounce.out</option>
+            <option value="bounce.inOut">bounce.inOut</option>
+            <option value="circ.in">circ.in</option>
+            <option value="circ.out">circ.out</option>
+            <option value="circ.inOut">circ.inOut</option>
+          </select>
+        </label>
+
+        <label class="parameter-label">
+          Swoop Amount: <span id="swoop-value">-100</span>px
+          <input type="range" id="swoop" min="-200" max="200" step="10" value="-100">
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="scale" checked>
+          Animate Scale
+        </label>
+
+        <div id="scale-controls">
+          <label class="parameter-label">
+            Scale Start Delay: <span id="scale-delay-value">0.00</span>
+            <input type="range" id="scale-delay" min="0" max="1.0" step="0.01" value="0">
+          </label>
+
+          <label class="parameter-label">
+            Scale Up Duration: <span id="scale-up-duration-value">0.20</span>s
+            <input type="range" id="scale-up-duration" min="0.10" max="3.00" step="0.01" value="0.20">
+          </label>
+
+          <label class="parameter-label">
+            Scale Up Ease:
+            <select class="scale-ease-select" id="scale-up-ease">
+              <option value="none">none</option>
+              <option value="power1.in">power1.in</option>
+              <option value="power2.in">power2.in</option>
+              <option value="power3.in" selected>power3.in</option>
+              <option value="power4.in">power4.in</option>
+              <option value="back.in">back.in</option>
+              <option value="elastic.in">elastic.in</option>
+            </select>
+          </label>
+
+          <label class="parameter-label">
+            Scale Peak: <span id="scale-peak-value">1.90</span>
+            <input type="range" id="scale-peak" min="1.0" max="3.0" step="0.1" value="1.9">
+          </label>
+
+          <label class="parameter-label">
+            Scale Pause: <span id="scale-pause-value">0.05</span>
+            <input type="range" id="scale-pause" min="0" max="4.0" step="0.01" value="0.05">
+          </label>
+
+          <label class="parameter-label">
+            Scale Down Duration: <span id="scale-down-duration-value">0.10</span>
+            <input type="range" id="scale-down-duration" min="0" max="4.0" step="0.01" value="0.10">
+          </label>
+
+          <label class="parameter-label">
+            Scale Down Ease:
+            <select class="scale-ease-select" id="scale-down-ease">
+              <option value="none" selected>none</option>
+              <option value="power1.out">power1.out</option>
+              <option value="power2.out">power2.out</option>
+              <option value="power3.out">power3.out</option>
+              <option value="power4.out">power4.out</option>
+            </select>
+          </label>
+
+          <label class="parameter-label">
+            Scale Target: <span id="scale-target-value">0.40</span>
+            <input type="range" id="scale-target" min="0" max="4.0" step="0.1" value="0.4">
+          </label>
+        </div>
+
+        <button id="reset-button" class="reset-button disabled" disabled>🔄 Reset</button>
+      </div>
+
+      <div class="config-output-panel">
+        <h3 class="config-output-title">Config Output</h3>
+        <div class="config-output-content" id="config-output"></div>
       </div>
     </div>
-    <div id="root"></div>
+
+    <!-- Target - Upper Right -->
+    <div id="target" class="target-circle"></div>
+
+    <!-- Dart Home - Mid-Lower Left -->
+    <div class="dart-home">
+      <div id="dart" class="dart">Click me</div>
+    </div>
   </div>
 
-  <script type="text/babel">
-    const { useState, useRef, useCallback } = React;
+  <script>
+    gsap.registerPlugin(MotionPathPlugin);
 
-    // useFlyToTarget hook
-    function useFlyToTarget() {
-      const activeAnimationsRef = useRef([]);
+    // State
+    let config = {
+      motionDuration: 0.45,
+      motionEase: 'power3.out',
+      swoopAmount: -100,
+      scale: true,
+      scaleStartDelay: 0,
+      scaleUpDuration: 0.2,
+      scaleUpEase: 'power3.in',
+      scalePeak: 1.9,
+      scalePause: 0.05,
+      scaleDownDuration: 0.1,
+      scaleDownEase: 'none',
+      scaleTarget: 0.4,
+    };
 
-      const flyToTarget = useCallback((sourceElement, targetElement, userConfig = {}) => {
-        if (!sourceElement || !targetElement) {
-          console.warn('useFlyToTarget: source or target element is null');
-          return null;
+    let isAtTarget = false;
+
+    // Elements
+    const dart = document.getElementById('dart');
+    const target = document.getElementById('target');
+    const resetButton = document.getElementById('reset-button');
+    const scaleCheckbox = document.getElementById('scale');
+    const scaleControls = document.getElementById('scale-controls');
+
+    // useFlyToTarget implementation
+    function flyToTarget(sourceElement, targetElement, userConfig) {
+      const cfg = { ...config, ...userConfig };
+
+      const sourceRect = sourceElement.getBoundingClientRect();
+      const targetRect = targetElement.getBoundingClientRect();
+
+      const currentX = gsap.getProperty(sourceElement, 'x') || 0;
+      const currentY = gsap.getProperty(sourceElement, 'y') || 0;
+
+      const targetX = currentX + (targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2);
+      const targetY = currentY + (targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2);
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          isAtTarget = true;
+          updateResetButton();
         }
+      });
 
-        const config = {
-          motionDuration: 0.45,
-          motionEase: 'power3.out',
-          swoopAmount: -100,
-          scale: true,
-          scaleStartDelay: 0,
-          scaleUpDuration: 0.2,
-          scaleUpEase: 'power3.in',
-          scalePeak: 2.5,
-          scalePause: 0.15,
-          scaleDownDuration: 0.1,
-          scaleDownEase: 'none',
-          scaleTarget: 1.0,
-          enableShadow: true,
-          baseShadowBlur: 4,
-          onComplete: () => {},
-          onStart: () => {},
-          ...userConfig
+      const motionConfig = {
+        duration: cfg.motionDuration,
+        ease: cfg.motionEase,
+      };
+
+      if (cfg.swoopAmount !== 0) {
+        const midX = (currentX + targetX) / 2;
+        const midY = (currentY + targetY) / 2;
+        const dx = targetX - currentX;
+        const dy = targetY - currentY;
+        const perpX = -dy;
+        const perpY = dx;
+        const length = Math.sqrt(perpX * perpX + perpY * perpY);
+        const normalizedPerpX = perpX / length;
+        const normalizedPerpY = perpY / length;
+        const controlX = midX + normalizedPerpX * cfg.swoopAmount;
+        const controlY = midY + normalizedPerpY * cfg.swoopAmount;
+
+        motionConfig.motionPath = {
+          path: [
+            { x: currentX, y: currentY },
+            { x: controlX, y: controlY },
+            { x: targetX, y: targetY }
+          ],
+          curviness: 2,
+          resolution: 6,
+        };
+      } else {
+        motionConfig.x = targetX;
+        motionConfig.y = targetY;
+      }
+
+      tl.to(sourceElement, motionConfig, 0);
+
+      if (cfg.scale) {
+        const scaleConfig = {
+          scale: cfg.scalePeak,
+          delay: cfg.scaleStartDelay,
+          duration: cfg.scaleUpDuration,
+          ease: cfg.scaleUpEase,
         };
 
-        const sourceRect = sourceElement.getBoundingClientRect();
-        const targetRect = targetElement.getBoundingClientRect();
+        const baseShadowBlur = 4;
+        const startBlur = baseShadowBlur;
+        const maxBlur = baseShadowBlur * cfg.scalePeak * 0.5;
 
-        const currentX = gsap.getProperty(sourceElement, 'x');
-        const currentY = gsap.getProperty(sourceElement, 'y');
+        gsap.set(sourceElement, { boxShadow: `0px 2px ${startBlur}px rgba(0,0,0,0.3)` });
+        scaleConfig.boxShadow = `0px 2px ${maxBlur}px rgba(0,0,0,0.6)`;
 
-        const targetX = currentX + (targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2);
-        const targetY = currentY + (targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2);
+        tl.fromTo(sourceElement, { scale: 1 }, scaleConfig, 0);
 
-        config.onStart();
-
-        const tl = gsap.timeline({ onComplete: config.onComplete });
-
-        const motionConfig = {
-          duration: config.motionDuration,
-          ease: config.motionEase,
+        const scaleDownConfig = {
+          delay: cfg.scalePause,
+          scale: cfg.scaleTarget,
+          duration: cfg.scaleDownDuration,
+          ease: cfg.scaleDownEase,
+          boxShadow: '0px 0px 0px rgba(0,0,0,0.0)',
         };
 
-        if (config.swoopAmount !== 0) {
-          const midX = (currentX + targetX) / 2;
-          const midY = (currentY + targetY) / 2;
-          const dx = targetX - currentX;
-          const dy = targetY - currentY;
-          const perpX = -dy;
-          const perpY = dx;
-          const length = Math.sqrt(perpX * perpX + perpY * perpY);
-          const normalizedPerpX = perpX / length;
-          const normalizedPerpY = perpY / length;
-          const controlX = midX + normalizedPerpX * config.swoopAmount;
-          const controlY = midY + normalizedPerpY * config.swoopAmount;
+        tl.to(sourceElement, scaleDownConfig, `>${cfg.scaleStartDelay + cfg.scaleUpDuration}`);
+      }
 
-          motionConfig.motionPath = {
-            path: [
-              { x: currentX, y: currentY },
-              { x: controlX, y: controlY },
-              { x: targetX, y: targetY }
-            ],
-            curviness: 2,
-            resolution: 6,
-          };
-        } else {
-          motionConfig.x = targetX;
-          motionConfig.y = targetY;
-        }
-
-        tl.to(sourceElement, motionConfig, 0);
-
-        if (config.scale) {
-          const scaleConfig = {
-            scale: config.scalePeak,
-            delay: config.scaleStartDelay,
-            duration: config.scaleUpDuration,
-            ease: config.scaleUpEase,
-          };
-
-          if (config.enableShadow) {
-            const startBlur = config.baseShadowBlur;
-            const maxBlur = config.baseShadowBlur * config.scalePeak * 0.5;
-            gsap.set(sourceElement, { boxShadow: `0px 2px ${startBlur}px rgba(0,0,0,0.3)` });
-            scaleConfig.boxShadow = `0px 2px ${maxBlur}px rgba(0,0,0,0.6)`;
-          }
-
-          tl.fromTo(sourceElement, { scale: 1 }, scaleConfig, 0);
-
-          const scaleDownConfig = {
-            delay: config.scalePause,
-            scale: config.scaleTarget,
-            duration: config.scaleDownDuration,
-            ease: config.scaleDownEase,
-          };
-
-          if (config.enableShadow) {
-            scaleDownConfig.boxShadow = '0px 0px 0px rgba(0,0,0,0.0)';
-          }
-
-          tl.to(sourceElement, scaleDownConfig, `>${config.scaleStartDelay + config.scaleUpDuration}`);
-        } else {
-          gsap.set(sourceElement, { scale: 1 });
-        }
-
-        activeAnimationsRef.current.push(tl);
-        return tl;
-      }, []);
-
-      return { flyToTarget };
+      return tl;
     }
 
-    // Demo Component
-    function Demo() {
-      const { flyToTarget } = useFlyToTarget();
-
-      // Example 1
-      const item1Ref = useRef(null);
-      const target1Ref = useRef(null);
-      const handleExample1 = () => {
-        flyToTarget(item1Ref.current, target1Ref.current, {
-          motionDuration: 0.5,
-          swoopAmount: -100,
-          scale: true,
-          scalePeak: 2,
-          onComplete: () => {
-            gsap.set(item1Ref.current, { x: 0, y: 0, scale: 1 });
-          }
-        });
-      };
-
-      // Example 2
-      const item2Ref = useRef(null);
-      const target2Ref = useRef(null);
-      const handleExample2 = () => {
-        flyToTarget(item2Ref.current, target2Ref.current, {
-          motionDuration: 0.3,
-          swoopAmount: 0,
-          scale: false,
-          onComplete: () => {
-            gsap.set(item2Ref.current, { x: 0, y: 0, scale: 1 });
-          }
-        });
-      };
-
-      // Example 3
-      const item3Ref = useRef(null);
-      const target3Ref = useRef(null);
-      const handleExample3 = () => {
-        flyToTarget(item3Ref.current, target3Ref.current, {
-          motionDuration: 0.7,
-          motionEase: 'back.out(1.1)',
-          swoopAmount: 50,
-          scale: true,
-          scalePeak: 1.2,
-          scaleTarget: 0,
-          onComplete: () => {
-            setTimeout(() => {
-              gsap.set(item3Ref.current, { x: 0, y: 0, scale: 1 });
-            }, 500);
-          }
-        });
-      };
-
-      // Example 4
-      const item4Ref = useRef(null);
-      const target4Ref = useRef(null);
-      const handleExample4 = () => {
-        flyToTarget(item4Ref.current, target4Ref.current, {
-          motionDuration: 0.8,
-          motionEase: 'bounce.out',
-          swoopAmount: 150,
-          scale: true,
-          scalePeak: 2.5,
-          onComplete: () => {
-            gsap.set(item4Ref.current, { x: 0, y: 0, scale: 1 });
-          }
-        });
-      };
-
-      // Example 5
-      const item5aRef = useRef(null);
-      const item5bRef = useRef(null);
-      const item5cRef = useRef(null);
-      const target5Ref = useRef(null);
-      const handleExample5 = () => {
-        flyToTarget(item5aRef.current, target5Ref.current, {
-          motionDuration: 0.5,
-          swoopAmount: -80,
-        });
-
-        setTimeout(() => {
-          flyToTarget(item5bRef.current, target5Ref.current, {
-            motionDuration: 0.5,
-            swoopAmount: -80,
-          });
-        }, 150);
-
-        setTimeout(() => {
-          flyToTarget(item5cRef.current, target5Ref.current, {
-            motionDuration: 0.5,
-            swoopAmount: -80,
-            onComplete: () => {
-              setTimeout(() => {
-                [item5aRef, item5bRef, item5cRef].forEach(ref => {
-                  gsap.set(ref.current, { x: 0, y: 0, scale: 1 });
-                });
-              }, 500);
-            }
-          });
-        }, 300);
-      };
-
-      return (
-        <div className="demo-container">
-          <div className="examples-grid">
-            <div className="example-card">
-              <h3 className="example-title">1. Basic Click Animation</h3>
-              <p className="example-description">Click the box to see it fly to the target with scale</p>
-              <div className="example-stage">
-                <div ref={item1Ref} className="item blue" onClick={handleExample1}>
-                  Click me
-                </div>
-                <div ref={target1Ref} className="target">Target</div>
-              </div>
-            </div>
-
-            <div className="example-card">
-              <h3 className="example-title">2. Straight Line (No Curve)</h3>
-              <p className="example-description">Fast straight-line motion without scale animation</p>
-              <div className="example-stage">
-                <div ref={item2Ref} className="item green" onClick={handleExample2}>
-                  Click me
-                </div>
-                <div ref={target2Ref} className="target">Target</div>
-              </div>
-            </div>
-
-            <div className="example-card">
-              <h3 className="example-title">3. Hide Animation</h3>
-              <p className="example-description">Shrinks to nothing at the target (like hiding a list)</p>
-              <div className="example-stage">
-                <div ref={item3Ref} className="item red" onClick={handleExample3}>
-                  Hide me
-                </div>
-                <div ref={target3Ref} className="target small">Button</div>
-              </div>
-            </div>
-
-            <div className="example-card">
-              <h3 className="example-title">4. Bouncy Curved Path</h3>
-              <p className="example-description">Large curve with bounce easing</p>
-              <div className="example-stage">
-                <div ref={item4Ref} className="item purple" onClick={handleExample4}>
-                  Bounce!
-                </div>
-                <div ref={target4Ref} className="target">Target</div>
-              </div>
-            </div>
-
-            <div className="example-card full-width">
-              <h3 className="example-title">5. Multiple Items (Staggered)</h3>
-              <p className="example-description">Three items flying to the same target with staggered timing</p>
-              <div className="example-stage wide">
-                <div className="items-group">
-                  <div ref={item5aRef} className="item small orange">1</div>
-                  <div ref={item5bRef} className="item small orange">2</div>
-                  <div ref={item5cRef} className="item small orange">3</div>
-                </div>
-                <div ref={target5Ref} className="target">Collect</div>
-              </div>
-              <button className="trigger-button" onClick={handleExample5}>
-                Trigger All
-              </button>
-            </div>
-          </div>
-
-          <div className="info-panel">
-            <h2>useFlyToTarget Hook Examples</h2>
-            <p>These examples demonstrate different ways to use the <code>useFlyToTarget</code> hook.</p>
-            <ul>
-              <li>Click any colored box to trigger its animation</li>
-              <li>Each example shows different configuration options</li>
-              <li>The hook handles all GSAP animation logic internally</li>
-            </ul>
-          </div>
-        </div>
-      );
+    // Click handler
+    function handleDartClick() {
+      if (isAtTarget) return;
+      flyToTarget(dart, target, config);
     }
 
-    // Render
-    ReactDOM.render(<Demo />, document.getElementById('root'));
+    // Reset handler
+    function handleReset() {
+      if (!isAtTarget) return;
+
+      gsap.killTweensOf(dart);
+      gsap.set(dart, { x: 0, y: 0, rotation: 0, scale: 1 });
+
+      isAtTarget = false;
+      updateResetButton();
+    }
+
+    function updateResetButton() {
+      if (isAtTarget) {
+        resetButton.classList.remove('disabled');
+        resetButton.classList.add('enabled');
+        resetButton.disabled = false;
+      } else {
+        resetButton.classList.remove('enabled');
+        resetButton.classList.add('disabled');
+        resetButton.disabled = true;
+      }
+    }
+
+    function updateConfig() {
+      const configOutput = document.getElementById('config-output');
+      configOutput.textContent = JSON.stringify(config, null, 2);
+    }
+
+    // Event listeners for controls
+    document.getElementById('duration').addEventListener('input', (e) => {
+      config.motionDuration = parseFloat(e.target.value);
+      document.getElementById('duration-value').textContent = config.motionDuration.toFixed(2);
+      updateConfig();
+    });
+
+    document.getElementById('ease').addEventListener('change', (e) => {
+      config.motionEase = e.target.value;
+      updateConfig();
+    });
+
+    document.getElementById('swoop').addEventListener('input', (e) => {
+      config.swoopAmount = parseFloat(e.target.value);
+      document.getElementById('swoop-value').textContent = config.swoopAmount;
+      updateConfig();
+    });
+
+    scaleCheckbox.addEventListener('change', (e) => {
+      config.scale = e.target.checked;
+      scaleControls.style.display = e.target.checked ? 'block' : 'none';
+      updateConfig();
+    });
+
+    document.getElementById('scale-delay').addEventListener('input', (e) => {
+      config.scaleStartDelay = parseFloat(e.target.value);
+      document.getElementById('scale-delay-value').textContent = config.scaleStartDelay.toFixed(2);
+      updateConfig();
+    });
+
+    document.getElementById('scale-up-duration').addEventListener('input', (e) => {
+      config.scaleUpDuration = parseFloat(e.target.value);
+      document.getElementById('scale-up-duration-value').textContent = config.scaleUpDuration.toFixed(2);
+      updateConfig();
+    });
+
+    document.getElementById('scale-up-ease').addEventListener('change', (e) => {
+      config.scaleUpEase = e.target.value;
+      updateConfig();
+    });
+
+    document.getElementById('scale-peak').addEventListener('input', (e) => {
+      config.scalePeak = parseFloat(e.target.value);
+      document.getElementById('scale-peak-value').textContent = config.scalePeak.toFixed(2);
+      updateConfig();
+    });
+
+    document.getElementById('scale-pause').addEventListener('input', (e) => {
+      config.scalePause = parseFloat(e.target.value);
+      document.getElementById('scale-pause-value').textContent = config.scalePause.toFixed(2);
+      updateConfig();
+    });
+
+    document.getElementById('scale-down-duration').addEventListener('input', (e) => {
+      config.scaleDownDuration = parseFloat(e.target.value);
+      document.getElementById('scale-down-duration-value').textContent = config.scaleDownDuration.toFixed(2);
+      updateConfig();
+    });
+
+    document.getElementById('scale-down-ease').addEventListener('change', (e) => {
+      config.scaleDownEase = e.target.value;
+      updateConfig();
+    });
+
+    document.getElementById('scale-target').addEventListener('input', (e) => {
+      config.scaleTarget = parseFloat(e.target.value);
+      document.getElementById('scale-target-value').textContent = config.scaleTarget.toFixed(2);
+      updateConfig();
+    });
+
+    dart.addEventListener('click', handleDartClick);
+    resetButton.addEventListener('click', handleReset);
+
+    // Initialize
+    updateConfig();
   </script>
 </body>
 </html>
