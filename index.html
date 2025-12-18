@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>useFlyToTarget - Interactive Demo</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .header .links {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .header .links a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .header .links a:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    #root {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .demo-container {
+      padding: 40px;
+      min-height: 600px;
+    }
+
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .example-card {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .example-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .example-title {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .example-description {
+      margin: 0 0 20px 0;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .example-stage {
+      position: relative;
+      background: white;
+      border-radius: 8px;
+      padding: 40px;
+      min-height: 200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .example-stage.wide {
+      min-height: 150px;
+    }
+
+    .items-group {
+      display: flex;
+      gap: 16px;
+    }
+
+    .item {
+      padding: 16px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .item:hover {
+      transform: scale(1.05);
+    }
+
+    .item:active {
+      transform: scale(0.95);
+    }
+
+    .item.small {
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+
+    .item.blue { background: #4a90e2; }
+    .item.green { background: #4caf50; }
+    .item.red { background: #e74c3c; }
+    .item.purple { background: #9b59b6; }
+    .item.orange { background: #f39c12; }
+
+    .target {
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.05);
+      border: 2px dashed rgba(0, 0, 0, 0.2);
+      color: #666;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .target.small {
+      padding: 8px 16px;
+      font-size: 12px;
+    }
+
+    .trigger-button {
+      margin-top: 16px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      background: #667eea;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .trigger-button:hover {
+      background: #5568d3;
+    }
+
+    .info-panel {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 32px;
+    }
+
+    .info-panel h2 {
+      margin: 0 0 16px 0;
+      font-size: 24px;
+      color: #333;
+    }
+
+    .info-panel p {
+      margin: 0 0 16px 0;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .info-panel code {
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+
+    .info-panel ul {
+      margin: 0;
+      padding-left: 24px;
+      color: #666;
+    }
+
+    .info-panel li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>useFlyToTarget</h1>
+      <p>A React hook for animating elements with curved paths and scale effects</p>
+      <div class="links">
+        <a href="https://github.com/bendelaney/useFlyToTarget" target="_blank">📦 GitHub</a>
+        <a href="https://github.com/bendelaney/useFlyToTarget#readme" target="_blank">📖 Documentation</a>
+      </div>
+    </div>
+    <div id="root"></div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useRef, useCallback } = React;
+
+    // useFlyToTarget hook
+    function useFlyToTarget() {
+      const activeAnimationsRef = useRef([]);
+
+      const flyToTarget = useCallback((sourceElement, targetElement, userConfig = {}) => {
+        if (!sourceElement || !targetElement) {
+          console.warn('useFlyToTarget: source or target element is null');
+          return null;
+        }
+
+        const config = {
+          motionDuration: 0.45,
+          motionEase: 'power3.out',
+          swoopAmount: -100,
+          scale: true,
+          scaleStartDelay: 0,
+          scaleUpDuration: 0.2,
+          scaleUpEase: 'power3.in',
+          scalePeak: 2.5,
+          scalePause: 0.15,
+          scaleDownDuration: 0.1,
+          scaleDownEase: 'none',
+          scaleTarget: 1.0,
+          enableShadow: true,
+          baseShadowBlur: 4,
+          onComplete: () => {},
+          onStart: () => {},
+          ...userConfig
+        };
+
+        const sourceRect = sourceElement.getBoundingClientRect();
+        const targetRect = targetElement.getBoundingClientRect();
+
+        const currentX = gsap.getProperty(sourceElement, 'x');
+        const currentY = gsap.getProperty(sourceElement, 'y');
+
+        const targetX = currentX + (targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2);
+        const targetY = currentY + (targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2);
+
+        config.onStart();
+
+        const tl = gsap.timeline({ onComplete: config.onComplete });
+
+        const motionConfig = {
+          duration: config.motionDuration,
+          ease: config.motionEase,
+        };
+
+        if (config.swoopAmount !== 0) {
+          const midX = (currentX + targetX) / 2;
+          const midY = (currentY + targetY) / 2;
+          const dx = targetX - currentX;
+          const dy = targetY - currentY;
+          const perpX = -dy;
+          const perpY = dx;
+          const length = Math.sqrt(perpX * perpX + perpY * perpY);
+          const normalizedPerpX = perpX / length;
+          const normalizedPerpY = perpY / length;
+          const controlX = midX + normalizedPerpX * config.swoopAmount;
+          const controlY = midY + normalizedPerpY * config.swoopAmount;
+
+          motionConfig.motionPath = {
+            path: [
+              { x: currentX, y: currentY },
+              { x: controlX, y: controlY },
+              { x: targetX, y: targetY }
+            ],
+            curviness: 2,
+            resolution: 6,
+          };
+        } else {
+          motionConfig.x = targetX;
+          motionConfig.y = targetY;
+        }
+
+        tl.to(sourceElement, motionConfig, 0);
+
+        if (config.scale) {
+          const scaleConfig = {
+            scale: config.scalePeak,
+            delay: config.scaleStartDelay,
+            duration: config.scaleUpDuration,
+            ease: config.scaleUpEase,
+          };
+
+          if (config.enableShadow) {
+            const startBlur = config.baseShadowBlur;
+            const maxBlur = config.baseShadowBlur * config.scalePeak * 0.5;
+            gsap.set(sourceElement, { boxShadow: `0px 2px ${startBlur}px rgba(0,0,0,0.3)` });
+            scaleConfig.boxShadow = `0px 2px ${maxBlur}px rgba(0,0,0,0.6)`;
+          }
+
+          tl.fromTo(sourceElement, { scale: 1 }, scaleConfig, 0);
+
+          const scaleDownConfig = {
+            delay: config.scalePause,
+            scale: config.scaleTarget,
+            duration: config.scaleDownDuration,
+            ease: config.scaleDownEase,
+          };
+
+          if (config.enableShadow) {
+            scaleDownConfig.boxShadow = '0px 0px 0px rgba(0,0,0,0.0)';
+          }
+
+          tl.to(sourceElement, scaleDownConfig, `>${config.scaleStartDelay + config.scaleUpDuration}`);
+        } else {
+          gsap.set(sourceElement, { scale: 1 });
+        }
+
+        activeAnimationsRef.current.push(tl);
+        return tl;
+      }, []);
+
+      return { flyToTarget };
+    }
+
+    // Demo Component
+    function Demo() {
+      const { flyToTarget } = useFlyToTarget();
+
+      // Example 1
+      const item1Ref = useRef(null);
+      const target1Ref = useRef(null);
+      const handleExample1 = () => {
+        flyToTarget(item1Ref.current, target1Ref.current, {
+          motionDuration: 0.5,
+          swoopAmount: -100,
+          scale: true,
+          scalePeak: 2,
+        });
+      };
+
+      // Example 2
+      const item2Ref = useRef(null);
+      const target2Ref = useRef(null);
+      const handleExample2 = () => {
+        flyToTarget(item2Ref.current, target2Ref.current, {
+          motionDuration: 0.3,
+          swoopAmount: 0,
+          scale: false,
+        });
+      };
+
+      // Example 3
+      const item3Ref = useRef(null);
+      const target3Ref = useRef(null);
+      const handleExample3 = () => {
+        flyToTarget(item3Ref.current, target3Ref.current, {
+          motionDuration: 0.7,
+          motionEase: 'back.out(1.1)',
+          swoopAmount: 50,
+          scale: true,
+          scalePeak: 1.2,
+          scaleTarget: 0,
+          onComplete: () => {
+            setTimeout(() => {
+              if (item3Ref.current) {
+                item3Ref.current.style.transform = 'translate(0, 0) scale(1)';
+              }
+            }, 500);
+          }
+        });
+      };
+
+      // Example 4
+      const item4Ref = useRef(null);
+      const target4Ref = useRef(null);
+      const handleExample4 = () => {
+        flyToTarget(item4Ref.current, target4Ref.current, {
+          motionDuration: 0.8,
+          motionEase: 'bounce.out',
+          swoopAmount: 150,
+          scale: true,
+          scalePeak: 2.5,
+        });
+      };
+
+      // Example 5
+      const item5aRef = useRef(null);
+      const item5bRef = useRef(null);
+      const item5cRef = useRef(null);
+      const target5Ref = useRef(null);
+      const handleExample5 = () => {
+        flyToTarget(item5aRef.current, target5Ref.current, {
+          motionDuration: 0.5,
+          swoopAmount: -80,
+        });
+
+        setTimeout(() => {
+          flyToTarget(item5bRef.current, target5Ref.current, {
+            motionDuration: 0.5,
+            swoopAmount: -80,
+          });
+        }, 150);
+
+        setTimeout(() => {
+          flyToTarget(item5cRef.current, target5Ref.current, {
+            motionDuration: 0.5,
+            swoopAmount: -80,
+            onComplete: () => {
+              setTimeout(() => {
+                [item5aRef, item5bRef, item5cRef].forEach(ref => {
+                  if (ref.current) {
+                    ref.current.style.transform = 'translate(0, 0) scale(1)';
+                  }
+                });
+              }, 500);
+            }
+          });
+        }, 300);
+      };
+
+      return (
+        <div className="demo-container">
+          <div className="examples-grid">
+            <div className="example-card">
+              <h3 className="example-title">1. Basic Click Animation</h3>
+              <p className="example-description">Click the box to see it fly to the target with scale</p>
+              <div className="example-stage">
+                <div ref={item1Ref} className="item blue" onClick={handleExample1}>
+                  Click me
+                </div>
+                <div ref={target1Ref} className="target">Target</div>
+              </div>
+            </div>
+
+            <div className="example-card">
+              <h3 className="example-title">2. Straight Line (No Curve)</h3>
+              <p className="example-description">Fast straight-line motion without scale animation</p>
+              <div className="example-stage">
+                <div ref={item2Ref} className="item green" onClick={handleExample2}>
+                  Click me
+                </div>
+                <div ref={target2Ref} className="target">Target</div>
+              </div>
+            </div>
+
+            <div className="example-card">
+              <h3 className="example-title">3. Hide Animation</h3>
+              <p className="example-description">Shrinks to nothing at the target (like hiding a list)</p>
+              <div className="example-stage">
+                <div ref={item3Ref} className="item red" onClick={handleExample3}>
+                  Hide me
+                </div>
+                <div ref={target3Ref} className="target small">Button</div>
+              </div>
+            </div>
+
+            <div className="example-card">
+              <h3 className="example-title">4. Bouncy Curved Path</h3>
+              <p className="example-description">Large curve with bounce easing</p>
+              <div className="example-stage">
+                <div ref={item4Ref} className="item purple" onClick={handleExample4}>
+                  Bounce!
+                </div>
+                <div ref={target4Ref} className="target">Target</div>
+              </div>
+            </div>
+
+            <div className="example-card full-width">
+              <h3 className="example-title">5. Multiple Items (Staggered)</h3>
+              <p className="example-description">Three items flying to the same target with staggered timing</p>
+              <div className="example-stage wide">
+                <div className="items-group">
+                  <div ref={item5aRef} className="item small orange">1</div>
+                  <div ref={item5bRef} className="item small orange">2</div>
+                  <div ref={item5cRef} className="item small orange">3</div>
+                </div>
+                <div ref={target5Ref} className="target">Collect</div>
+              </div>
+              <button className="trigger-button" onClick={handleExample5}>
+                Trigger All
+              </button>
+            </div>
+          </div>
+
+          <div className="info-panel">
+            <h2>useFlyToTarget Hook Examples</h2>
+            <p>These examples demonstrate different ways to use the <code>useFlyToTarget</code> hook.</p>
+            <ul>
+              <li>Click any colored box to trigger its animation</li>
+              <li>Each example shows different configuration options</li>
+              <li>The hook handles all GSAP animation logic internally</li>
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
+    // Render
+    ReactDOM.render(<Demo />, document.getElementById('root'));
+  </script>
+</body>
+</html>
