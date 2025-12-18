@@ -270,9 +270,8 @@ The hook calculates motion paths intelligently:
 
 ### Scale Behavior
 - **scale = false**: Motion only, no scale animation
-- **grabScale = 1.0**: Start from natural size
 - **scaleTarget = 0**: Shrink to nothing (perfect for hide animations)
-- **scalePeak > grabScale**: Creates a "lift" effect
+- **scalePeak**: Creates a "lift" effect
 
 ### Fixed Positioning
 For elements that need to break out of containers (like modals, lists, etc.):
