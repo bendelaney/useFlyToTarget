@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef } from 'react';
 import gsap from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
@@ -7,11 +7,25 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(MotionPathPlugin);
 }
 
+type PositionType = 'center' 
+| 'topLeft' 
+| 'topCenter' 
+| 'topRight'
+| 'leftCenter' 
+| 'rightCenter' 
+| 'bottomLeft' 
+| 'bottomCenter' 
+| 'bottomRight';
+
 export interface FlyToTargetConfig {
   // Motion parameters
-  duration?: number;
-  ease?: string;
+  motionDuration?: number;
+  motionEase?: string;
   swoopAmount?: number;
+
+  // Target parameters
+  targetPosition?: PositionType;
+  targetPositionOffset?: { x: number; y: number };
 
   // Scale animation parameters
   scale?: boolean;
@@ -35,9 +49,11 @@ export interface FlyToTargetConfig {
 }
 
 const DEFAULT_CONFIG: Required<FlyToTargetConfig> = {
-  duration: 0.45,
-  ease: 'power3.out',
+  motionDuration: 0.45,
+  motionEase: 'power3.out',
   swoopAmount: -100,
+  targetPosition: 'center',
+  targetPositionOffset: { x: 0, y: 0 },
   scale: true,
   grabScale: 1.2,
   scaleStartDelay: 0,
@@ -63,7 +79,7 @@ const DEFAULT_CONFIG: Required<FlyToTargetConfig> = {
  *
  * // Later, trigger the animation
  * flyToTarget(dartElement, targetElement, {
- *   duration: 0.5,
+ *   motionDuration: 0.5,
  *   swoopAmount: -100,
  *   onComplete: () => console.log('Animation complete!')
  * });
@@ -91,9 +107,61 @@ export function useFlyToTarget() {
     const currentX = gsap.getProperty(sourceElement, 'x') as number;
     const currentY = gsap.getProperty(sourceElement, 'y') as number;
 
-    // Calculate the target absolute position (center to center)
-    const targetX = currentX + (targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2);
-    const targetY = currentY + (targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2);
+    // Calculate target point based on targetPosition config
+    const getTargetPoint = (rect: DOMRect, position: PositionType): { x: number; y: number } => {
+      const xPositions = {
+        left: rect.left,
+        center: rect.left + rect.width / 2,
+        right: rect.left + rect.width,
+      };
+      const yPositions = {
+        top: rect.top,
+        center: rect.top + rect.height / 2,
+        bottom: rect.top + rect.height,
+      };
+
+      let pos: { x: number; y: number };
+      switch (position) {
+        case 'topLeft':
+          pos = { x: xPositions.left, y: yPositions.top };
+          break;
+        case 'topCenter':
+          pos = { x: xPositions.center, y: yPositions.top };
+          break;
+        case 'topRight':
+          pos = { x: xPositions.right, y: yPositions.top };
+          break;
+        case 'leftCenter':
+          pos = { x: xPositions.left, y: yPositions.center };
+          break;
+        case 'rightCenter':
+          pos = { x: xPositions.right, y: yPositions.center };
+          break;
+        case 'bottomLeft':
+          pos = { x: xPositions.left, y: yPositions.bottom };
+          break;
+        case 'bottomCenter':
+          pos = { x: xPositions.center, y: yPositions.bottom };
+          break;
+        case 'bottomRight':
+          pos = { x: xPositions.right, y: yPositions.bottom };
+          break;
+        case 'center':
+        default:
+          pos = { x: xPositions.center, y: yPositions.center };
+      }
+
+      // Apply target position offset
+      pos.x += config.targetPositionOffset.x;
+      pos.y += config.targetPositionOffset.y;
+      return pos;
+    };
+
+    // Calculate the target absolute position (source center to target position)
+    const targetPoint = getTargetPoint(targetRect, config.targetPosition);
+    const sourceCenter = { x: sourceRect.left + sourceRect.width / 2, y: sourceRect.top + sourceRect.height / 2 };
+    const targetX = currentX + (targetPoint.x - sourceCenter.x);
+    const targetY = currentY + (targetPoint.y - sourceCenter.y);
 
     // Call onStart callback
     config.onStart();
@@ -105,8 +173,8 @@ export function useFlyToTarget() {
 
     // Build motion animation config
     const motionConfig: gsap.TweenVars = {
-      duration: config.duration,
-      ease: config.ease,
+      duration: config.motionDuration,
+      ease: config.motionEase,
     };
 
     if (config.swoopAmount !== 0) {
